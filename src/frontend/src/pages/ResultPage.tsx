@@ -1,0 +1,358 @@
+import { AuthGuard } from "@/components/AuthGuard";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "@tanstack/react-router";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Download,
+  LayoutDashboard,
+  Leaf,
+  Star,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
+import { motion } from "motion/react";
+import { useMemo } from "react";
+import {
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
+
+interface SavedResult {
+  totalCO2: number;
+  carbonLevel: string;
+  ecoPoints: string | number | bigint;
+  ecoScore: string | number | bigint;
+  inputs?: {
+    transportation: number;
+    electricity: number;
+    gas: number;
+    waste: number;
+  };
+}
+
+function getLevelConfig(level: string) {
+  if (level === "Low") {
+    return {
+      badge: "bg-level-low text-white",
+      icon: CheckCircle2,
+      color: "text-level-low",
+      bg: "bg-level-low",
+      message: "You are doing better than average! 🌱",
+      sub: "Your carbon footprint is below the global average. Keep up the great work!",
+      chartColor: "oklch(0.55 0.15 155)",
+    };
+  }
+  if (level === "High") {
+    return {
+      badge: "bg-level-high text-white",
+      icon: AlertTriangle,
+      color: "text-level-high",
+      bg: "bg-level-high",
+      message: "You need to reduce your emissions.",
+      sub: "Your footprint is significantly above average. Check the Suggestions page for action tips.",
+      chartColor: "oklch(0.55 0.2 27)",
+    };
+  }
+  return {
+    badge: "bg-level-medium text-white",
+    icon: TrendingUp,
+    color: "text-level-medium",
+    bg: "bg-level-medium",
+    message: "You're close to average — keep improving!",
+    sub: "You're making progress. Small changes in daily habits can make a big difference.",
+    chartColor: "oklch(0.65 0.18 75)",
+  };
+}
+
+const PIE_COLORS = [
+  "oklch(0.52 0.13 155)",
+  "oklch(0.62 0.14 215)",
+  "oklch(0.65 0.18 85)",
+  "oklch(0.58 0.14 300)",
+];
+
+function ResultContent() {
+  const navigate = useNavigate();
+
+  const result: SavedResult | null = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("greenSteps_lastResult");
+      if (!raw) return null;
+      return JSON.parse(raw) as SavedResult;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  if (!result) {
+    return (
+      <div className="container mx-auto max-w-2xl px-4 py-20 text-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-muted mx-auto mb-4">
+          <TrendingDown className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h2 className="font-display text-2xl font-bold mb-2">
+          No Result Found
+        </h2>
+        <p className="text-muted-foreground mb-6">
+          Submit a carbon tracking entry first to see your results.
+        </p>
+        <Button
+          onClick={() => void navigate({ to: "/track" })}
+          className="gap-2"
+        >
+          <Leaf className="h-4 w-4" />
+          Track Now
+        </Button>
+      </div>
+    );
+  }
+
+  const level =
+    result.carbonLevel ||
+    (result.totalCO2 < 5 ? "Low" : result.totalCO2 < 15 ? "Medium" : "High");
+  const config = getLevelConfig(level);
+  const IconComp = config.icon;
+
+  const ecoPoints = Number(result.ecoPoints);
+  const ecoScore = Number(result.ecoScore);
+
+  // Pie chart data from inputs
+  const inputs = result.inputs;
+  const pieData = inputs
+    ? [
+        {
+          name: "Transportation",
+          value: Math.max(inputs.transportation * 0.21, 0),
+        },
+        {
+          name: "Electricity",
+          value: Math.max((inputs.electricity * 0.42) / 4, 0),
+        },
+        { name: "Gas", value: Math.max((inputs.gas * 2.0) / 4, 0) },
+        { name: "Waste", value: Math.max(inputs.waste * 0.5, 0) },
+      ].filter((d) => d.value > 0)
+    : [];
+
+  const handleDownload = () => {
+    const lines = [
+      "GREEN STEPS – CARBON FOOTPRINT REPORT",
+      "======================================",
+      `Date: ${new Date().toLocaleString()}`,
+      "",
+      `Total CO₂: ${result.totalCO2.toFixed(2)} kg`,
+      `Carbon Level: ${level}`,
+      `Eco Points: ${ecoPoints}`,
+      `Eco Score: ${ecoScore}`,
+      "",
+      "BREAKDOWN",
+      "---------",
+      inputs
+        ? `Transportation: ${(inputs.transportation * 0.21).toFixed(2)} kg CO₂ (${inputs.transportation} km/week)`
+        : "",
+      inputs
+        ? `Electricity: ${((inputs.electricity * 0.42) / 4).toFixed(2)} kg CO₂ (${inputs.electricity} kWh/month)`
+        : "",
+      inputs
+        ? `Gas: ${((inputs.gas * 2.0) / 4).toFixed(2)} kg CO₂ (${inputs.gas} m³/month)`
+        : "",
+      inputs
+        ? `Waste: ${(inputs.waste * 0.5).toFixed(2)} kg CO₂ (${inputs.waste} kg/week)`
+        : "",
+      "",
+      "COMPARISON",
+      `${config.message}`,
+      "",
+      "Generated by Green Steps – Carbon Footprint Tracker",
+      "Built with caffeine.ai",
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    const blob = new Blob([lines], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `green-steps-report-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="container mx-auto max-w-3xl px-4 md:px-6 py-10">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8 text-center"
+      >
+        <h1 className="font-display text-4xl font-bold mb-2">Your Results</h1>
+        <p className="text-muted-foreground">
+          Here's a breakdown of your carbon footprint
+        </p>
+      </motion.div>
+
+      {/* Main Result Card */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.1 }}
+      >
+        <Card className="shadow-card mb-6">
+          <CardContent className="p-8 text-center">
+            <div
+              className={`flex h-16 w-16 items-center justify-center rounded-2xl ${config.bg}/20 mx-auto mb-4`}
+            >
+              <IconComp className={`h-8 w-8 ${config.color}`} />
+            </div>
+
+            <p className="font-display text-6xl font-extrabold text-foreground mb-2">
+              {result.totalCO2.toFixed(2)}
+              <span className="text-2xl font-normal text-muted-foreground ml-2">
+                kg CO₂
+              </span>
+            </p>
+
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <Badge className={`${config.badge} text-sm px-3 py-1`}>
+                {level} Emission
+              </Badge>
+            </div>
+
+            <p className={`font-semibold text-lg ${config.color} mb-1`}>
+              {config.message}
+            </p>
+            <p className="text-muted-foreground text-sm max-w-md mx-auto">
+              {config.sub}
+            </p>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Stats Row */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="grid grid-cols-2 gap-4 mb-6"
+      >
+        <Card className="shadow-card">
+          <CardContent className="p-5 text-center">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl icon-bg-amber mx-auto mb-2">
+              <Star className="h-4 w-4" />
+            </div>
+            <p className="font-display text-2xl font-bold">{ecoPoints}</p>
+            <p className="text-xs text-muted-foreground">Eco Points Earned</p>
+          </CardContent>
+        </Card>
+        <Card className="shadow-card">
+          <CardContent className="p-5 text-center">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl icon-bg-green mx-auto mb-2">
+              <TrendingUp className="h-4 w-4" />
+            </div>
+            <p className="font-display text-2xl font-bold">{ecoScore}/100</p>
+            <p className="text-xs text-muted-foreground">Eco Score</p>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Pie Chart */}
+      {pieData.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <Card className="shadow-card mb-6">
+            <CardHeader>
+              <CardTitle className="font-display text-lg">
+                Emission Breakdown
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={4}
+                    dataKey="value"
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${entry.name}`}
+                        fill={PIE_COLORS[index % PIE_COLORS.length]}
+                        stroke="none"
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      background: "oklch(0.998 0 0)",
+                      border: "1px solid oklch(0.9 0.01 150)",
+                      borderRadius: "0.75rem",
+                      fontSize: "12px",
+                    }}
+                    formatter={(value: number) => [
+                      `${value.toFixed(2)} kg CO₂`,
+                      "",
+                    ]}
+                  />
+                  <Legend
+                    iconType="circle"
+                    iconSize={8}
+                    formatter={(value) => (
+                      <span className="text-xs text-foreground">{value}</span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Action Buttons */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="flex flex-col sm:flex-row gap-3"
+      >
+        <Button
+          variant="outline"
+          onClick={handleDownload}
+          data-ocid="result.download_button"
+          className="flex-1 gap-2"
+        >
+          <Download className="h-4 w-4" />
+          Download Report
+        </Button>
+        <Button
+          onClick={() => void navigate({ to: "/dashboard" })}
+          data-ocid="result.dashboard_button"
+          className="flex-1 gap-2"
+        >
+          <LayoutDashboard className="h-4 w-4" />
+          Go Back to Dashboard
+        </Button>
+      </motion.div>
+    </div>
+  );
+}
+
+export default function ResultPage() {
+  return (
+    <AuthGuard>
+      <ResultContent />
+    </AuthGuard>
+  );
+}

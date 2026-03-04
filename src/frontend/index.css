@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   Green Steps – Carbon Footprint Tracker
+   Design System: Clean, light, professional with fresh green accents
+   Typography: Cabinet Grotesk (display) + Figtree (body)
+   Color approach: Warm whites + forest green accents, not garish
+   ============================================================ */
+
+/* Cabinet Grotesk – Display / Headings */
+@font-face {
+  font-family: "Cabinet Grotesk";
+  src: url("/assets/fonts/CabinetGrotesk-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Figtree – Body */
+@font-face {
+  font-family: "Figtree";
+  src: url("/assets/fonts/Figtree-Variable.woff2") format("woff2");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+
+    /* Core palette – warm white + forest greens */
+    --background: 0.985 0.004 95;
+    --foreground: 0.18 0.025 165;
+
+    /* Cards – pure white with slight warmth */
+    --card: 0.998 0 0;
+    --card-foreground: 0.18 0.025 165;
+
+    /* Popovers */
+    --popover: 0.998 0 0;
+    --popover-foreground: 0.18 0.025 165;
+
+    /* Primary – Forest Green */
+    --primary: 0.52 0.13 155;
+    --primary-foreground: 0.99 0 0;
+
+    /* Secondary – Sage tint */
+    --secondary: 0.94 0.025 155;
+    --secondary-foreground: 0.35 0.08 155;
+
+    /* Muted – neutral gray */
+    --muted: 0.95 0.008 95;
+    --muted-foreground: 0.52 0.01 165;
+
+    /* Accent – Soft mint */
+    --accent: 0.92 0.04 165;
+    --accent-foreground: 0.3 0.09 155;
+
+    /* Destructive – warm red */
+    --destructive: 0.577 0.245 27.325;
+    --destructive-foreground: 0.985 0 0;
+
+    /* Borders & inputs */
+    --border: 0.9 0.01 150;
+    --input: 0.9 0.01 150;
+    --ring: 0.52 0.13 155;
+
+    /* Chart palette */
+    --chart-1: 0.52 0.13 155;
+    --chart-2: 0.62 0.14 215;
+    --chart-3: 0.72 0.15 85;
+    --chart-4: 0.65 0.18 35;
+    --chart-5: 0.55 0.12 300;
+
+    /* Semantic semantic colors for carbon levels */
+    --level-low: 0.55 0.15 155;
+    --level-low-bg: 0.93 0.06 155;
+    --level-medium: 0.65 0.18 75;
+    --level-medium-bg: 0.95 0.07 85;
+    --level-high: 0.55 0.2 27;
+    --level-high-bg: 0.95 0.05 27;
+
+    /* Sidebar */
+    --sidebar: 0.998 0 0;
+    --sidebar-foreground: 0.18 0.025 165;
+    --sidebar-primary: 0.52 0.13 155;
+    --sidebar-primary-foreground: 0.99 0 0;
+    --sidebar-accent: 0.94 0.025 155;
+    --sidebar-accent-foreground: 0.35 0.08 155;
+    --sidebar-border: 0.9 0.01 150;
+    --sidebar-ring: 0.52 0.13 155;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer utilities {
+  /* Carbon level color utilities */
+  .text-level-low { color: oklch(var(--level-low)); }
+  .bg-level-low { background-color: oklch(var(--level-low-bg)); }
+  .border-level-low { border-color: oklch(var(--level-low)); }
+  .text-level-medium { color: oklch(var(--level-medium)); }
+  .bg-level-medium { background-color: oklch(var(--level-medium-bg)); }
+  .border-level-medium { border-color: oklch(var(--level-medium)); }
+  .text-level-high { color: oklch(var(--level-high)); }
+  .bg-level-high { background-color: oklch(var(--level-high-bg)); }
+  .border-level-high { border-color: oklch(var(--level-high)); }
+
+  /* Gradient mesh background */
+  .hero-gradient {
+    background:
+      radial-gradient(ellipse at 20% 50%, oklch(0.88 0.06 155 / 0.4) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, oklch(0.90 0.04 200 / 0.3) 0%, transparent 55%),
+      radial-gradient(ellipse at 60% 80%, oklch(0.92 0.03 120 / 0.2) 0%, transparent 50%),
+      oklch(0.985 0.004 95);
+  }
+
+  /* Grain texture overlay */
+  .grain-overlay::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  /* Stat card icon backgrounds */
+  .icon-bg-green { background-color: oklch(0.92 0.07 155); color: oklch(0.42 0.15 155); }
+  .icon-bg-blue { background-color: oklch(0.90 0.07 215); color: oklch(0.42 0.15 215); }
+  .icon-bg-amber { background-color: oklch(0.93 0.08 85); color: oklch(0.52 0.15 75); }
+  .icon-bg-purple { background-color: oklch(0.92 0.07 300); color: oklch(0.45 0.14 300); }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: oklch(0.95 0.005 150);
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(0.75 0.05 155);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.52 0.13 155);
+}
+
+/* Smooth page transitions */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+
+.animate-delay-100 { animation-delay: 0.1s; }
+.animate-delay-200 { animation-delay: 0.2s; }
+.animate-delay-300 { animation-delay: 0.3s; }
+.animate-delay-400 { animation-delay: 0.4s; }
